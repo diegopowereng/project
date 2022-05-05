@@ -16,8 +16,21 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from django.conf import settings
+from django.conf.urls.static import static
+from expenditures.viewsets import *
+from rest_framework import routers
+
+
+router = routers.SimpleRouter()
+router.register(r'expenditures', ExpendituresViewSet)
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('website.urls')), # grappelli URLS
+    path('site', include('website.urls')), # grappelli URLS
+    path('api-auth/', include('rest_framework.urls')),
+    path('', include(router.urls)),
 
-]
+
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

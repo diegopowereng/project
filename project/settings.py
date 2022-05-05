@@ -25,13 +25,14 @@ SECRET_KEY = 'django-insecure-*hba_$j74d@3h0$mznsh6g@@=mi!4!w3xd#9smejj0%%qja8!c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.drosegastronomia.com']
+ALLOWED_HOSTS = ['www.drosegastronomia.com', 'localhost']
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'expenditures',
+    'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +56,7 @@ ROOT_URLCONF = 'project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['project/templates'],
+        'DIRS': ['project/templates', 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -131,3 +132,10 @@ MEDIA_ROOT = '/home/engdiego/project/media'
 MEDIA_URL = '/media/'
 STATIC_ROOT = '/home/engdiego/project/static'
 STATIC_URL = '/static/'
+
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+            ]
+
+            
