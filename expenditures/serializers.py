@@ -6,4 +6,4 @@ from .models import Expenditure
 class ExpenditureSerializer(ModelSerializer):
     class Meta:
         model = Expenditure
-        fields = ['id', 'created_at', 'is_active', 'status']
+        fields = ['id', 'created_at', 'scheduled', 'payment', 'expenditure_type', 'obs', 'amount', 'receipt', 'scheduled_date']

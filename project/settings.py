@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['www.drosegastronomia.com', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
+    'django_filters',
     'expenditures',
     'rest_framework',
     'django.contrib.admin',
@@ -70,6 +71,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'project.wsgi.application'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DATE_FORMAT': "%d-%m-%Y",
+    'DATE_INPUT_FORMATS': ["%d-%m-%Y"]
+
+}
+
+
 
 
 # Database
