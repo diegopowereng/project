@@ -60,7 +60,7 @@ class ExpendituresViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     queryset = Expenditure.objects.all()
     serializer_class = ExpenditureSerializer
-    filterset_fields = ['created_at', 'payment', 'expenditure_type']
+    filterset_fields = ['created_at', 'payment', 'expenditure_type', 'scheduled']
     search_fields = ['obs']
     pagination_class = LargeResultsSetPagination
 
@@ -91,26 +91,9 @@ class ExpenditureList(APIView):
     template_name = 'expenditures/listar_despesas.html'
 
     def get(self, request):
+        try:
             queryset = Expenditure.objects.all()
             soma = str(round(Expenditure.objects.aggregate(Sum('amount'))['amount__sum'], 2))
-            '''
-            created_at = self.request.query_params.get('created_at')
-            is_active = self.request.query_params.get('is_active')
-            payment = self.request.query_params.get('payment')
-            expenditure_type = self.request.query_params.get('expenditure_type')
-            obs = self.request.query_params.get('obs')
-            amount = self.request.query_params.get('amount')
-            if created_at:
-                queryset = queryset.filter(created_at=created_at)
-            elif is_active:
-                queryset = queryset.filter(is_active=is_active)
-            elif payment:
-                queryset = queryset.filter(payment=payment)
-            elif expenditure_type:
-                queryset = queryset.filter(expenditure_type=expenditure_type)
-            elif obs:
-                queryset = queryset.filter(obs=obs)
-            elif amount:
-                queryset = queryset.filter(amount=amount)
-            '''
-            return Response({'despesas': queryset, 'soma': soma})
+        except:
+            return Response({'despesas': {}, 'soma': '0,00'})
+        return Response({'despesas': queryset, 'soma': soma})

@@ -34,7 +34,7 @@ urlpatterns = [
     path('site', include('website.urls')), # grappelli URLS
     path('api-auth/', include('rest_framework.urls')),
     path('', include(router.urls)),
-    path('controle-despesas', ExpenditureList.as_view(), name='controle-despesas'),
+    path('despesas', ExpenditureList.as_view(), name='controle-despesas'),
 
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

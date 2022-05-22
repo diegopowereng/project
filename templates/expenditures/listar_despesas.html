@@ -20,7 +20,8 @@
     <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/1/jquery.min.js"></script>
     <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/3/css/bootstrap.css" />
-
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
 
 
     <title>DESPESAS!</title>
@@ -29,23 +30,47 @@
 <script>
     var auxParams = null
 
+    var allExpenditures = true;
+
+
     function ClearParams() {
         $('select').prop('selectedIndex', 0);
         var start = moment().subtract(29, 'days').locale('pt-br');
         var end = moment().locale('pt-br');
+        document.getElementById("toogle_div").style.display = "none";
+        document.getElementById("all_check").checked = true;
         $('#reportrange span').html(start.locale('pt-br').format('DD/MM/YYYY') + ' até ' + end.locale('pt-br').format('DD/MM/YYYY'));
         var auxP = {
             'payment': undefined,
             'expenditure_type': undefined,
             'start': undefined,
-            'end': undefined
+            'end': undefined,
+
         }
         auxParams.data = auxP
         ajaxRequest(auxParams);
     }
 
     function ChooseFilter(field, value) {
-        queryParams[field] = value.value
+        if (field == 'allExpenditures') {
+            if ($(value).prop('checked') == true) {
+                delete queryParams["scheduled"];
+                document.getElementById("toogle_div").style.display = "none";
+            } else {
+                document.getElementById("toogle_div").style.display = "block";;
+                queryParams['scheduled'] = $(value).prop('checked')
+            }
+        }
+        if (field == 'scheduled') {
+            if($(value).prop('checked') == true){
+                document.getElementById("span_text").innerHTML = "Listando Despesas Agendadas";
+            } else {
+                document.getElementById("span_text").innerHTML = "Listando Despesas Não Agendadas";
+            }
+            queryParams['scheduled'] = $(value).prop('checked')
+        } else {
+            queryParams[field] = value.value
+        }
         auxParams.data = queryParams;
         ajaxRequest(auxParams);
     }
@@ -54,12 +79,14 @@
         'payment': undefined,
         'expenditure_type': undefined,
         'start': undefined,
-        'end': undefined
+        'end': undefined,
+
     }
 
     function ajaxRequest(params) {
         auxParams = params
-        var url = 'https://www.drosegastronomia.com/expenditures/'
+        // var url = 'https://www.drosegastronomia.com/expenditures/'
+        var url = 'http://localhost:8000/expenditures/'
         $.get(url + '?' + $.param(auxParams.data)).then(function (res) {
             document.getElementById("sum").textContent = "R$ " + res['sum']
             document.getElementById("count").textContent = res['count'] + ' despesas'
@@ -73,10 +100,16 @@
     }
 
     function linkFormatter(value, row, index) {
-        return `${value}`;
+        return `<a href="${value}">Comprovante</a>`;
+    }
+
+    function linkFormatter1(value, row, index) {
+        if (value == true) {
+            return 'Sim'
+        }
+        return `Não`;
     }
 </script>
-
 
 <script type="text/javascript">
     $(function () {
@@ -84,7 +117,6 @@
         var end = moment().locale('pt-br');
         function cb(start, end) {
             $('#reportrange span').html(start.locale('pt-br').format('DD/MM/YYYY') + ' até ' + end.locale('pt-br').format('DD/MM/YYYY'));
-            //console.log(start.locale('pt-br').format('DD/MM/YYYY'), end.locale('pt-br').format('DD/MM/YYYY'))
             queryParams['start'] = start.locale('pt-br').format('YYYY-MM-DD')
             queryParams['end'] = end.locale('pt-br').format('YYYY-MM-DD')
             try {
@@ -95,15 +127,55 @@
             }
         }
 
+        function cb1(start) {
+            $('#reportrange span').html(start.locale('pt-br').format('DD-MM-YYYY'));
+        }
+
+
+
         $('input[id="agendamento"]').daterangepicker({
-            singleDatePicker: true,
-            showDropdowns: true,
-            minYear: 1901,
-            maxYear: parseInt(moment().format('YYYY'), 10)
-        }, function (start, end, label) {
-            var years = moment().diff(start, 'years');
-            alert("You are " + years + " years old!");
-        });
+            "showDropdowns": true,
+            "singleDatePicker": true,
+            "autoApply": false,
+            "locale": {
+                "format": "DD-MM-YYYY",
+                "separator": " - ",
+                "applyLabel": "Aplicar",
+                "cancelLabel": "Cancelar",
+                "fromLabel": "De",
+                "toLabel": "Até",
+                "customRangeLabel": "Personalizado",
+                "weekLabel": "W",
+                "daysOfWeek": [
+                    "Dom",
+                    "Seg",
+                    "Ter",
+                    "Qua",
+                    "Qui",
+                    "Sex",
+                    "Sáb"
+                ],
+                "monthNames": [
+                    "Janeiro",
+                    "Fevereiro",
+                    "Março",
+                    "Abril",
+                    "Maio",
+                    "Junho",
+                    "Julho",
+                    "Agosto",
+                    "Setembro",
+                    "Outubro",
+                    "Novembro",
+                    "Dezembro"
+                ],
+                "firstDay": 1
+            },
+            "alwaysShowCalendars": true,
+            startDate: end,
+            "opens": "center"
+        }, cb1);
+
 
         $('#reportrange').daterangepicker({
             "showDropdowns": true,
@@ -156,6 +228,7 @@
             "opens": "center"
         }, cb);
         cb(start, end);
+
     });
 </script>
 <script language="javascript">
@@ -194,7 +267,6 @@
             a.value += r + l.substr(u - 2, u)
         }
 
-        data['amount'] = a.value;
         document.getElementById("amount_td").innerHTML = 'R$ ' + a.value;
         return !1
     }
@@ -231,6 +303,7 @@
                                 id="expenditure">
                                 <option selected disabled>Tipo de Despesa</option>
                                 <option value="mercadoria">Mercadoria</option>
+                                <option value="revenda">Revenda</option>
                                 <option value="embalagens">Embalagens</option>
                                 <option value="despesa_variavel">Despesa Variável</option>
                                 <option value="folha_gestão">Folha Gestão</option>
@@ -248,6 +321,18 @@
                                 </div>
                                 <b class="caret"></b>
                             </div>
+                            
+                            <div class="btn btn-warning m-2 col-sm-2 btn-block">
+                                <input checked type="checkbox" class="" id="all_check" onchange="ChooseFilter('allExpenditures', this)"> Todads as
+                                Despesas
+                            </div>
+                       
+                            <div id="toogle_div" style="display: none" class="btn btn-warning m-2 col-sm-2 btn-block">
+                                <input type="checkbox" onchange="ChooseFilter('scheduled', this)"> <span id="span_text">Listando Despesas Não Agendadas</span>
+                            </div>
+
+                      
+
 
                             <div class="btn btn-warning m-2 col-sm-2 btn-block" onclick="ClearParams()">Limpar Filtros
                             </div>
@@ -280,14 +365,17 @@
                         <table id="table_2" data-locale="pt-br" data-toggle="table" data-ajax="ajaxRequest"
                             data-pagination="true" data-locale="pt-br" style="display: table;"
                             class="table table-striped table-hover table-responsive  m-3">
-                            <thead class=">
-                                <tr class= ">
-                                <th style="min-width: 100% !important" data-field="created_at"
-                                    data-formatter="linkFormatter" scope="col">Data</th>
-                                <th width="20%" data-field="amount" scope="col">Valor</th>
-                                <th width="20%" data-field="payment" scope="col">Pagamento</th>
-                                <th width="20%" data-field="obs" scope="col">Informações</th>
-                                <th width="20%" data-field="expenditure_type" scope="col">Tipo</th>
+                            <thead class="">
+                                <tr class="">
+                                    <th style="min-width: 100% !important" data-field="created_at" scope="col">Data</th>
+                                    <th data-field="amount" scope="col">Valor</th>
+                                    <th data-field="payment" scope="col">Pagamento</th>
+                                    <th data-field="obs" scope="col">Informações</th>
+                                    <th data-field="expenditure_type" scope="col">Tipo</th>
+                                    <th data-formatter="linkFormatter1" data-field="scheduled" scope="col">Agendado?
+                                    </th>
+                                    <th data-formatter="linkFormatter" data-field="receipt" scope="col">Comprovante</th>
+
 
                                 </tr>
                             </thead>
@@ -308,7 +396,7 @@
                 </div>
                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
                     <div class="card-body">
-                        <div>
+                        <form id="testeform" enctype="multipart/form-data">
                             <fieldset class="form-group">
                                 <div class="row p-5">
                                     <legend class="col-form-label col-sm-2 p-3">Tipo de Despesa</legend>
@@ -320,6 +408,13 @@
                                                 Mercadoria
                                             </label>
                                         </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio8" value="revenda">
+                                            <label class="form-check-label" for="payment_radio8">
+                                                Revenda
+                                            </label>
+                                        </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="expenditure_type"
                                                 id="payment_radio2" value="embalagens">
@@ -329,9 +424,44 @@
                                         </div>
                                         <div class="form-check disabled">
                                             <input class="form-check-input" type="radio" name="expenditure_type"
-                                                id="payment_radio3" value="revenda">
+                                                id="payment_radio3" value="despesa_fixa">
                                             <label class="form-check-label" for="payment_radio3">
-                                                Revenda
+                                                Despesa Fixa
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio4" value="despesa_variavel">
+                                            <label class="form-check-label" for="payment_radio4">
+                                                Despesa Variável
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio5" value="folha_gestão">
+                                            <label class="form-check-label" for="payment_radio5">
+                                                Folha Gestão
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio6" value="folha_operação">
+                                            <label class="form-check-label" for="payment_radio6">
+                                                Folha Operação
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio7" value="investimento">
+                                            <label class="form-check-label" for="payment_radio7">
+                                                Investimento
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="expenditure_type"
+                                                id="payment_radio9" value="melhoria_manutencao">
+                                            <label class="form-check-label" for="payment_radio9">
+                                                Melhoria e Manutenção
                                             </label>
                                         </div>
                                     </div>
@@ -357,9 +487,23 @@
                                         </div>
                                         <div class="form-check disabled">
                                             <input class="form-check-input" type="radio" name="payment" id="way_radio3"
-                                                value="credito">
+                                                value="dinheiro">
                                             <label class="form-check-label" for="way_radio3">
+                                                Dinheiro
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="payment" id="way_radio4"
+                                                value="credito">
+                                            <label class="form-check-label" for="way_radio4">
                                                 Crédito
+                                            </label>
+                                        </div>
+                                        <div class="form-check disabled">
+                                            <input class="form-check-input" type="radio" name="payment" id="way_radio5"
+                                                value="debito">
+                                            <label class="form-check-label" for="way_radio5">
+                                                Débito
                                             </label>
                                         </div>
                                     </div>
@@ -373,7 +517,7 @@
                                             <label for="comprovante_input">Valor da Despesa</label>
                                             <input class="form-control" type="text" name="amount"
                                                 placeholder="R$ Valor da Despesa"
-                                                onKeyPress="return(moeda(this,'.',',',event))">
+                                                onKeyPress="return(moeda(this,'','.',event))">
                                             <small id="emailHelp" class="form-text text-muted">Total gasto</small>
                                         </div>
                                     </div>
@@ -417,14 +561,14 @@
                                     <legend class="col-form-label col-sm-2 p-3">Comprovante</legend>
                                     <div class="col-sm-10" style="border-bottom: 1px solid #cacaca;">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="receipt">
+                                            <input class="form-check-input" type="checkbox" name="receipt_check">
                                             <label class="form-check-label" for="gridCheck1">
                                                 Despesa sem comprovante
                                             </label>
                                         </div>
                                         <div class="form-group mt-5" id="file">
                                             <label for="comprovante_input">Comprovante da Despesa</label>
-                                            <input id="comprovante_input" class="form-control" name="comprovante"
+                                            <input id="comprovante_input" class="form-control" name="receipt"
                                                 type="file">
                                             <small id="emailHelp" class="form-text text-muted">Upload de comprovante da
                                                 despesa paga</small>
@@ -446,11 +590,11 @@
                                     <div class="col-sm-10" style="border-bottom: 1px solid #cacaca;">
                                         <div class="form-group mt-5">
                                             <label for="agendamento">Responsável pelo gasto</label>
-                                            <select class="form-select" id="responsavel"
+                                            <select class="form-select" id="responsavel" name="responsible"
                                                 aria-label="Default select example">
-                                                <option value="jessica">Jessica</option>
-                                                <option value="diego">Diego</option>
-                                                <option value="tathi">Tathi</option>
+                                                <option value="JESSICA">Jessica</option>
+                                                <option value="DIEGO">Diego</option>
+                                                <option value="TATHI">Tathi</option>
                                             </select> <small id="emailHelp" class="form-text text-muted">Apontmento do
                                                 responsável pela despesa</small>
                                         </div>
@@ -464,68 +608,72 @@
                                     sistema faz parte de uma iniciativa que visa trazer 100% de exatidão para as
                                     despesas da empresa.</p>
                                 <hr>
-                                <table class="table table-responsive">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Campo</th>
-                                            <th scope="col">Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr scope="row">
-                                            <td>Dia</td>
-                                            <td><span id="created_at_td"></span></td>
-                                        </tr>
-                                        <t scope="row" r>
-                                            <td>Informações</td>
-                                            <td><span id="obs_td"></span></td>
+                                <div class="table-responsive">
+
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Campo</th>
+                                                <th scope="col">Valor</th>
                                             </tr>
-                                            <tr scope="row">
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Dia</td>
+                                                <td><span id="created_at_td"></span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Informações</td>
+                                                <td><span id="obs_td"></span></td>
+                                            </tr>
+                                            <tr>
                                                 <td>Valor</td>
                                                 <td><span id="amount_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Tipo de pagamento</td>
                                                 <td><span id="payment_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Classe</td>
                                                 <td><span id="expenditure_type_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Comprovante?</td>
                                                 <td><span id="comp_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Justificativa falta de comprovante</td>
                                                 <td><span id="justificativa_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Comprovante</td>
                                                 <td><span id="file_td"></span></td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Agendamento?</td>
                                                 <td>Sim</td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Data do pagamento</td>
                                                 <td>06/08/2022</td>
                                             </tr>
-                                            <tr scope="row">
+                                            <tr>
                                                 <td>Responsável</td>
                                                 <td>Diego</td>
                                             </tr>
-                                    </tbody>
-                                </table>
+                                        </tbody>
+                                    </table>
+                                </div>
+
                             </div>
                             <fieldset class="form-group">
                                 <div class="row p-5">
-                                    <button class="btn btn-warning btn-block" onClick="placeExpenditure()">Incluir
-                                        Despesa</button>
+                                    <spam class="btn btn-warning btn-block" onClick="placeExpenditure()">Incluir
+                                        Despesa</spam>
                                 </div>
                             </fieldset>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -568,111 +716,52 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script>
 
-
-        let data = {
-            "created_at": '23-05-2022',
-            "scheduled": false,
-            "payment": 'pix',
-            "expenditure_type": 'mercadoria',
-            "obs": "repolho",
-            "amount": 123.50,
-            "receipt": document.getElementById("comprovante_input").files[0],
-            "scheduled_date": null,
-            "responsible": 'null',
-            "justification": 'iuiuiu'
-
-        };
-
-
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = cookies[i].trim();
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        let csrftoken = getCookie('csrftoken');
-
-        var data_FORM = new FormData()
-
         function placeExpenditure() {
+            var myForm = document.getElementById('testeform');
+            var data_FORM1 = new FormData(myForm)
 
-            data_FORM.append('receipt', document.getElementById("comprovante_input").files[0])
-            data_FORM.append('created_at', data['created_at'])
-            data_FORM.append('scheduled', data['scheduled'])
-            data_FORM.append('payment', data['payment'])
-            data_FORM.append('expenditure_type', data['expenditure_type'])
-            data_FORM.append('obs', data['obs'])
-            data_FORM.append('amount', data['amount'])
-            data_FORM.append('scheduled_date', data['scheduled_date'])
-            data_FORM.append('responsible', data['responsible'])
-            data_FORM.append('justification', data['justification'])
-
-
-            fetch("/expenditures/", {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {  
-                            'Content-Type': 'application/json', 
-                            "X-CSRFToken": csrftoken, 
-                        },
-                body: data_FORM
-            }).then(res => {
-                console.log("Request complete! response:", res);
-            }).catch(error => {
-                console.log(error)
-                console.log(error.name); // ReferenceError
-                console.log(error.message); // lalala is not defined
-                console.log(error.stack); // ReferenceError: lalala is not defined at (...call stack)
+            $.ajax({
+                url: "/expenditures/",
+                type: 'POST',
+                data: data_FORM1,
+                success: function (data) {
+                    location.reload();
+                },
+                cache: false,
+                contentType: false,
+                processData: false
             });
-
         }
 
         var expenditure_type = document.getElementsByName("expenditure_type");
         for (var i = 0, max = expenditure_type.length; i < max; i++) {
             expenditure_type[i].onclick = function () {
-                data['expenditure_type'] = this.value;
                 document.getElementById("expenditure_type_td").innerHTML = this.value;
-                console.log(data)
             }
         }
 
         var payment = document.getElementsByName("payment");
         for (var i = 0, max = payment.length; i < max; i++) {
             payment[i].onclick = function () {
-                data['payment'] = this.value;
                 document.getElementById("payment_td").innerHTML = this.value;
-                console.log(data)
             }
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            data['created_at'] = moment().locale('pt-br').format('DD-MM-YYYY');
+
+
             document.getElementById("created_at_td").innerHTML = moment().locale('pt-br').format('YYYY-MM-DD');
             var fileupload = $("#comprovante_input");
             fileupload.on('change', function () {
-                data['receipt'] = this.files[0];
-                console.log(this.files[0])
                 document.getElementById('file_td').innerHTML = this.files[0].name
-                console.log(data)
                 document.getElementById('comp_td').innerHTML = 'Sim'
             });
             const source = document.getElementById('obs_input');
             const result = document.getElementById('obs_td');
+
             const inputHandler = function (e) {
-                data['obs'] = e.target.value;
                 result.innerHTML = e.target.value;
             }
-
             source.addEventListener('input', inputHandler);
             result.addEventListener('propertychange', inputHandler); // for IE8
 
@@ -680,7 +769,6 @@
             const justificativa_input_result = document.getElementById('justificativa_td');
 
             const justificativa_inputHandler = function (e) {
-                data['justification'] = e.target.value;
                 justificativa_input_result.innerHTML = e.target.value;
             }
 
@@ -694,24 +782,23 @@
 
                 } else {
                     document.getElementById("agendamento_div").style.display = "none";
+                    $('#agendamento').val('')
 
                 }
             });
 
-            var comprovante = document.querySelector("input[name=receipt]");
+            var comprovante = document.querySelector("input[name=receipt_check]");
             comprovante.addEventListener('change', function () {
                 if (this.checked) {
                     document.getElementById("justificativa").style.display = "block";
-                    document.getElementById("file").style.display = "none";
+                    document.getElementById("comprovante_input").style.display = "none";
                     document.getElementById('comp_td').innerHTML = 'Não';
                     document.getElementById('comprovante_input').value = null;
-                    data['receipt'] = null;
                 } else {
                     document.getElementById("justificativa").style.display = "none";
                     document.getElementById('justificativa_input').value = null;
-                    document.getElementById("file").style.display = "block";
+                    document.getElementById("comprovante_input").style.display = "block";
                     document.getElementById('comp_td').innerHTML = 'Sim';
-                    data['justification'] = null;
                 }
             });
 
