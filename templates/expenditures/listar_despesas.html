@@ -85,8 +85,8 @@
 
     function ajaxRequest(params) {
         auxParams = params
-        // var url = 'https://www.drosegastronomia.com/expenditures/'
-        var url = 'http://localhost:8000/expenditures/'
+        var url = 'https://www.drosegastronomia.com/expenditures/'
+        //var url = 'http://localhost:8000/expenditures/'
         $.get(url + '?' + $.param(auxParams.data)).then(function (res) {
             document.getElementById("sum").textContent = "R$ " + res['sum']
             document.getElementById("count").textContent = res['count'] + ' despesas'
